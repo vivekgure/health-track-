@@ -30,6 +30,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!user.passwordHash) {
+      return NextResponse.json(
+        { error: "This account was registered via Google. Please use 'Continue with Google' to sign in." },
+        { status: 400 }
+      );
+    }
+
     const passwordValid = await bcrypt.compare(password, user.passwordHash);
     if (!passwordValid) {
       return NextResponse.json(

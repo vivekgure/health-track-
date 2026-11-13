@@ -26,6 +26,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  googleId?: string | null;
+  googleEmail?: string | null;
   avatar?: string | null;
   profile?: Profile | null;
 }
@@ -36,6 +38,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   quickDemoLogin: () => Promise<boolean>;
+  signInWithGoogle: (email: string, name?: string) => Promise<{ success: boolean; error?: string }>;
+  linkGoogleAccount: (email: string, name?: string) => Promise<{ success: boolean; error?: string }>;
+  unlinkGoogleAccount: () => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateProfile: (profileData: Partial<Profile> & { name?: string }) => Promise<{ success: boolean; error?: string }>;
@@ -110,6 +115,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async (email: string, name?: string) => {
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name, action: "signin" }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || "Google authentication failed" };
+      }
+
+      setUser(data.user);
+      return { success: true };
+    } catch {
+      return { success: false, error: "Network error during Google sign in" };
+    }
+  };
+
+  const linkGoogleAccount = async (email: string, name?: string) => {
+    try {
+      const res = await fetch("/api/auth/google/link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || "Failed to link Google account" };
+      }
+
+      await refreshUser();
+      return { success: true };
+    } catch {
+      return { success: false, error: "Network error linking Google account" };
+    }
+  };
+
+  const unlinkGoogleAccount = async () => {
+    try {
+      const res = await fetch("/api/auth/google/link", {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || "Failed to unlink Google account" };
+      }
+
+      await refreshUser();
+      return { success: true };
+    } catch {
+      return { success: false, error: "Network error unlinking Google account" };
+    }
+  };
+
   const quickDemoLogin = async () => {
     const res = await login("demo@lifesync.app", "password123");
     if (res.success) {
@@ -157,6 +220,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         register,
         quickDemoLogin,
+        signInWithGoogle,
+        linkGoogleAccount,
+        unlinkGoogleAccount,
         logout,
         refreshUser,
         updateProfile,
@@ -174,4 +240,3 @@ export function useAuth() {
   }
   return context;
 }
-

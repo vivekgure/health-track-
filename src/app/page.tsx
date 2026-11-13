@@ -110,6 +110,7 @@ export default function OverviewPage() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [addingWater, setAddingWater] = useState(false);
+  const [googleAuthToast, setGoogleAuthToast] = useState("");
 
   // Modals
   const [showActivityModal, setShowActivityModal] = useState(false);
@@ -134,6 +135,10 @@ export default function OverviewPage() {
     fetchOverview();
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
+      if (params.get("googleAuth") === "success") {
+        setGoogleAuthToast("Google Account verified and connected! Welcome to LifeSync.");
+        setTimeout(() => setGoogleAuthToast(""), 5000);
+      }
       const tabParam = params.get("tab");
       if (tabParam && TABS.some((t) => t.id === tabParam)) {
         setActiveTab(tabParam);
@@ -269,6 +274,22 @@ export default function OverviewPage() {
         onClose={() => setShowFocusModal(false)}
         onSessionComplete={fetchOverview}
       />
+
+      {/* Google Auth Success Toast */}
+      {googleAuthToast && (
+        <div className="p-3.5 rounded-2xl bg-[#34A853]/15 border border-[#34A853]/40 text-[#34A853] text-xs font-bold flex items-center justify-between shadow-[0_0_15px_rgba(52,168,83,0.3)] animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#34A853]" />
+            <span>{googleAuthToast}</span>
+          </div>
+          <button
+            onClick={() => setGoogleAuthToast("")}
+            className="text-xs text-[#999999] hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* TOP HEADER: Greeting, Date & Wellness Score */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">

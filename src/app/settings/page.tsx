@@ -14,10 +14,15 @@ import {
   Check,
   Save,
   RotateCcw,
+  Link as LinkIcon,
+  Unlink,
+  CheckCircle2,
 } from "lucide-react";
+import GoogleIcon from "@/components/common/GoogleIcon";
+import GoogleAuthModal from "@/components/common/GoogleAuthModal";
 
 export default function SettingsPage() {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, updateProfile, logout, unlinkGoogleAccount } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   // Profile fields
@@ -42,6 +47,17 @@ export default function SettingsPage() {
   const [message, setMessage] = useState("");
   const [resetting, setResetting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [unlinkingGoogle, setUnlinkingGoogle] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("googleLinked") === "true") {
+        setMessage("Google account successfully linked to your LifeSync profile!");
+      }
+    }
+  }, []);
 
   const handleResetToZero = async () => {
     setResetting(true);
@@ -116,6 +132,18 @@ export default function SettingsPage() {
     }
   };
 
+  const handleUnlinkGoogle = async () => {
+    setUnlinkingGoogle(true);
+    const res = await unlinkGoogleAccount();
+    setUnlinkingGoogle(false);
+    if (res.success) {
+      setMessage("Google account successfully unlinked from your profile.");
+      setTimeout(() => setMessage(""), 4000);
+    } else {
+      setMessage(res.error || "Failed to unlink Google account");
+    }
+  };
+
   const handleRequestNotifications = async () => {
     if ("Notification" in window) {
       const perm = await Notification.requestPermission();
@@ -131,8 +159,21 @@ export default function SettingsPage() {
     }
   };
 
+  const isGoogleLinked = !!(user?.googleId || user?.googleEmail);
+
   return (
     <div className="space-y-6 sm:space-y-8 max-w-4xl animate-fadeIn">
+      <GoogleAuthModal
+        isOpen={showGoogleModal}
+        onClose={() => setShowGoogleModal(false)}
+        mode="link"
+        currentEmail={user?.googleEmail || user?.email || ""}
+        onSuccess={() => {
+          setMessage("Google account linked successfully!");
+          setTimeout(() => setMessage(""), 4000);
+        }}
+      />
+
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 text-xs font-bold text-[#FF2638] uppercase tracking-widest">
@@ -143,16 +184,78 @@ export default function SettingsPage() {
           Settings & Goals
         </h1>
         <p className="text-xs sm:text-sm text-[#999999] mt-1">
-          Customize your biological metrics, daily targets, and system appearance
+          Customize your biological metrics, daily targets, Google sync, and system appearance
         </p>
       </div>
 
       {message && (
         <div className="p-3.5 rounded-2xl bg-[#B5121B]/20 border border-[#FF2638]/40 text-[#FF2638] text-xs font-bold flex items-center gap-2 shadow-[0_0_12px_rgba(255,38,56,0.25)]">
-          <Check className="w-4 h-4" />
+          <Check className="w-4 h-4 shrink-0" />
           <span>{message}</span>
         </div>
       )}
+
+      {/* GOOGLE ACCOUNT INTEGRATION */}
+      <div className="p-6 rounded-3xl bg-[#151515] border border-[#292929] space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-[#292929]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-lg bg-white flex items-center justify-center shadow-sm">
+              <GoogleIcon className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-white">Google Account Integration</h2>
+              <p className="text-xs text-[#999999]">Link your Google profile for seamless authentication and identity sync</p>
+            </div>
+          </div>
+          {isGoogleLinked ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#34A853]/15 text-[#34A853] border border-[#34A853]/30 text-[11px] font-bold">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Connected</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#202020] text-[#999999] text-[11px]">
+              Not Connected
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#101010] border border-[#292929]">
+          <div>
+            <p className="text-xs font-semibold text-white">
+              {isGoogleLinked ? "Linked Google Profile" : "Connect with Google"}
+            </p>
+            <p className="text-xs text-[#999999] mt-0.5">
+              {isGoogleLinked
+                ? `Active Google identity: ${user?.googleEmail || user?.email}`
+                : "Enable one-click Google Sign-In and future Health Connect sync."}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {isGoogleLinked ? (
+              <button
+                type="button"
+                disabled={unlinkingGoogle}
+                onClick={handleUnlinkGoogle}
+                className="px-3.5 py-2 rounded-xl bg-[#202020] hover:bg-[#B5121B]/20 text-[#999999] hover:text-[#FF2638] border border-[#292929] hover:border-[#FF2638]/40 text-xs font-medium transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                <Unlink className="w-3.5 h-3.5" />
+                <span>{unlinkingGoogle ? "Unlinking..." : "Unlink Account"}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowGoogleModal(true)}
+                className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-100 text-[#1f1f1f] text-xs font-bold transition-all shadow-[0_0_12px_rgba(255,255,255,0.2)] flex items-center gap-2"
+              >
+                <GoogleIcon className="w-3.5 h-3.5" />
+                <LinkIcon className="w-3 h-3 text-neutral-600" />
+                <span>Link Google Account</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* PROFILE INFORMATION */}

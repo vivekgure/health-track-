@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Moon, Activity, Utensils, ShieldCheck, ArrowRight, Sparkles } from "lucide-react";
 import SpiderWebCorner from "@/components/common/SpiderWebCorner";
 import RedEmbers from "@/components/common/RedEmbers";
+import GoogleIcon from "@/components/common/GoogleIcon";
+import GoogleAuthModal from "@/components/common/GoogleAuthModal";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +19,17 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const errParam = params.get("error");
+      if (errParam) {
+        setError(decodeURIComponent(errParam));
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +55,36 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleClick = async () => {
+    setError("");
+    try {
+      const res = await fetch("/api/auth/google?action=signin");
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+      const data = await res.json();
+      if (data.configured) {
+        window.location.href = `/api/auth/google?action=signin`;
+      } else {
+        setShowGoogleModal(true);
+      }
+    } catch {
+      setShowGoogleModal(true);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#080808] text-[#F5F5F5] relative overflow-hidden">
       <SpiderWebCorner position="both" opacity={0.35} />
       <RedEmbers count={6} />
+
+      <GoogleAuthModal
+        isOpen={showGoogleModal}
+        onClose={() => setShowGoogleModal(false)}
+        mode="signin"
+        onSuccess={() => router.push("/")}
+      />
 
       <div className="w-full max-w-4xl grid md:grid-cols-2 bg-[#151515] border border-[#292929] rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden backdrop-blur-xl relative z-10">
         {/* Left Column: Visual Brand Pitch */}
@@ -125,13 +164,23 @@ export default function LoginPage() {
             <p className="text-xs text-[#999999] mt-1">Sign in to your LifeSync command center</p>
           </div>
 
+          {/* Sign in with Google Button */}
+          <button
+            type="button"
+            onClick={handleGoogleClick}
+            className="w-full py-3 px-4 mb-3 rounded-2xl bg-[#101010] hover:bg-[#1A1A1A] border border-[#292929] hover:border-[#4285F4]/60 text-white font-medium text-xs transition-all flex items-center justify-center gap-3 shadow-md group"
+          >
+            <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+            <span className="font-semibold text-white tracking-wide">Continue with Google</span>
+          </button>
+
           {/* Quick Demo Login Pill */}
-          <div className="mb-6 p-4 rounded-2xl bg-[#101010] border border-[#292929] hover:border-[#FF2638]/40 text-center transition-all">
-            <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#FF2638] mb-2">
+          <div className="mb-4 p-3.5 rounded-2xl bg-[#101010] border border-[#292929] hover:border-[#FF2638]/40 text-center transition-all">
+            <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#FF2638] mb-1.5">
               <Sparkles className="w-3.5 h-3.5 text-[#FF2638]" />
               <span>One-Click Evaluation Demo</span>
             </div>
-            <p className="text-[11px] text-[#999999] mb-3">
+            <p className="text-[11px] text-[#999999] mb-2.5">
               Explore LifeSync immediately with pre-populated demo data (Alex Morgan).
             </p>
             <button
@@ -145,7 +194,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="relative flex items-center justify-center mb-6">
+          <div className="relative flex items-center justify-center my-4">
             <div className="border-t border-[#292929] w-full"></div>
             <span className="bg-[#151515] px-3 text-[11px] uppercase tracking-wider text-[#666666] absolute">
               or sign in with email
@@ -158,7 +207,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
               <label className="block text-xs font-medium text-[#999999] mb-1.5">Email Address</label>
               <input
@@ -192,7 +241,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-xs text-[#999999] mt-6">
+          <p className="text-center text-xs text-[#999999] mt-5">
             Don&apos;t have an account yet?{" "}
             <Link href="/register" className="text-[#FF2638] font-bold hover:underline">
               Create an account

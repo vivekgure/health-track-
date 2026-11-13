@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import SpiderWebCorner from "@/components/common/SpiderWebCorner";
+import RedEmbers from "@/components/common/RedEmbers";
+import GoogleIcon from "@/components/common/GoogleIcon";
+import GoogleAuthModal from "@/components/common/GoogleAuthModal";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -15,6 +18,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,9 +40,36 @@ export default function RegisterPage() {
     }
   };
 
+  const handleGoogleClick = async () => {
+    setError("");
+    try {
+      const res = await fetch("/api/auth/google?action=signin");
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+      const data = await res.json();
+      if (data.configured) {
+        window.location.href = `/api/auth/google?action=signin`;
+      } else {
+        setShowGoogleModal(true);
+      }
+    } catch {
+      setShowGoogleModal(true);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#080808] text-[#F5F5F5] relative overflow-hidden">
       <SpiderWebCorner position="both" opacity={0.35} />
+      <RedEmbers count={6} />
+
+      <GoogleAuthModal
+        isOpen={showGoogleModal}
+        onClose={() => setShowGoogleModal(false)}
+        mode="signin"
+        onSuccess={() => router.push("/")}
+      />
 
       <div className="w-full max-w-md bg-[#151515] border border-[#292929] rounded-3xl p-8 sm:p-10 shadow-2xl relative z-10">
         <div className="text-center mb-6">
@@ -51,6 +82,23 @@ export default function RegisterPage() {
           </div>
           <h1 className="text-2xl font-black text-white">Join LifeSync</h1>
           <p className="text-xs text-[#999999] mt-1">Initialize your spider web wellness protocol</p>
+        </div>
+
+        {/* Sign up with Google Button */}
+        <button
+          type="button"
+          onClick={handleGoogleClick}
+          className="w-full py-3 px-4 mb-4 rounded-2xl bg-[#101010] hover:bg-[#1A1A1A] border border-[#292929] hover:border-[#4285F4]/60 text-white font-medium text-xs transition-all flex items-center justify-center gap-3 shadow-md group"
+        >
+          <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+          <span className="font-semibold text-white tracking-wide">Sign up with Google</span>
+        </button>
+
+        <div className="relative flex items-center justify-center my-4">
+          <div className="border-t border-[#292929] w-full"></div>
+          <span className="bg-[#151515] px-3 text-[10px] uppercase tracking-wider text-[#666666] absolute">
+            or register with email
+          </span>
         </div>
 
         {error && (
