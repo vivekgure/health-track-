@@ -52,9 +52,9 @@ export async function POST(request: Request) {
     const effectiveName = name || email.split("@")[0];
     const effectiveAvatar = avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(effectiveName)}`;
 
-    // 1. LINKING: If action is 'link' or user is already authenticated
-    const currentUser = await getCurrentUser(request);
-    if (action === "link" || currentUser) {
+    // 1. LINKING: If action is 'link'
+    if (action === "link") {
+      const currentUser = await getCurrentUser(request);
       if (!currentUser) {
         return NextResponse.json({ error: "You must be signed in to link a Google account" }, { status: 401 });
       }

@@ -3,7 +3,8 @@ import path from "path";
 import { PrismaClient } from "@prisma/client";
 
 function getDatabaseUrl(): string | undefined {
-  if (process.env.DATABASE_URL) {
+  // If a remote cloud database (e.g. Postgres / Supabase) is provided, use it
+  if (process.env.DATABASE_URL && !process.env.DATABASE_URL.startsWith("file:")) {
     return process.env.DATABASE_URL;
   }
 

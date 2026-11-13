@@ -29,7 +29,7 @@ export async function verifySessionToken(token: string): Promise<TokenPayload | 
   }
 }
 
-export async function getCurrentUser(request?: Request) {
+export async function getAuthenticatedUser(request?: Request) {
   let token: string | undefined;
 
   // Check Authorization header first if request is provided
@@ -69,6 +69,15 @@ export async function getCurrentUser(request?: Request) {
     }
   }
 
+  return null;
+}
+
+export async function getCurrentUser(request?: Request) {
+  const authedUser = await getAuthenticatedUser(request);
+  if (authedUser) {
+    return authedUser;
+  }
+
   // PUBLIC ACCESS ("FOR ALL"):
   // Gracefully fall back to demo operative user so public visitors immediately access the full platform
   const demoUser = await prisma.user.findUnique({
@@ -86,4 +95,3 @@ export async function getCurrentUser(request?: Request) {
 
   return null;
 }
-
