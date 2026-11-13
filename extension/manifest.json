@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "LifeSync - Mindful Focus & Web Activity Companion",
+  "version": "1.0.0",
+  "description": "Companion extension for LifeSync. Syncs website screen time, enforces focus sessions, and blocks distracting sites.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "alarms",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "LifeSync Companion"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
+

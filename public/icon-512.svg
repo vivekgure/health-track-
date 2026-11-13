@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="spiderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF2638" />
+      <stop offset="50%" stop-color="#B5121B" />
+      <stop offset="100%" stop-color="#3D0609" />
+    </linearGradient>
+    <radialGradient id="redGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF2638" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#080808" stop-opacity="0" />
+    </radialGradient>
+    <filter id="webShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#FF2638" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="#080808"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#101010" stroke="#292929" stroke-width="4"/>
+  <circle cx="256" cy="256" r="210" fill="url(#redGlow)" />
+
+  <!-- Spider Web Radial Spokes -->
+  <g stroke="#FF2638" stroke-width="2.5" stroke-opacity="0.5">
+    <line x1="256" y1="256" x2="256" y2="76" />
+    <line x1="256" y1="256" x2="383" y2="129" />
+    <line x1="256" y1="256" x2="436" y2="256" />
+    <line x1="256" y1="256" x2="383" y2="383" />
+    <line x1="256" y1="256" x2="256" y2="436" />
+    <line x1="256" y1="256" x2="129" y2="383" />
+    <line x1="256" y1="256" x2="76" y2="256" />
+    <line x1="256" y1="256" x2="129" y2="129" />
+  </g>
+
+  <!-- Concentric Web Polygons -->
+  <polygon points="256,196 298,214 316,256 298,298 256,316 214,298 196,256 214,214" fill="none" stroke="#FF2638" stroke-width="2.5" stroke-opacity="0.6" />
+  <polygon points="256,146 334,178 366,256 334,334 256,366 178,334 146,256 178,178" fill="none" stroke="#FF2638" stroke-width="2.5" stroke-opacity="0.75" />
+  <polygon points="256,96 369,143 416,256 369,369 256,416 143,369 96,256 143,143" fill="none" stroke="#FF2638" stroke-width="3" stroke-opacity="0.9" />
+
+  <!-- Center LifeSync Pulse / Heart Emblem -->
+  <circle cx="256" cy="256" r="42" fill="url(#spiderGrad)" filter="url(#webShadow)" />
+  <path d="M228 256 L244 256 L252 236 L260 276 L268 256 L284 256" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
