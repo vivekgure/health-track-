@@ -24,6 +24,7 @@ import {
   Heart,
   Radio,
   Sparkles,
+  Layers,
 } from "lucide-react";
 import ActiveSleepModal from "@/components/sleep/ActiveSleepModal";
 import LogActivityModal from "@/components/modals/LogActivityModal";
@@ -33,14 +34,15 @@ import CreateHabitModal from "@/components/modals/CreateHabitModal";
 import SpiderWebCorner from "@/components/common/SpiderWebCorner";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/sleep", label: "Sleep Tracker", icon: Moon },
-  { href: "/activity", label: "Activity & Steps", icon: Activity },
-  { href: "/nutrition", label: "Nutrition", icon: Utensils },
-  { href: "/screen-time", label: "Screen Time", icon: Smartphone },
-  { href: "/habits", label: "Habit Tracker", icon: CheckSquare },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/?tab=all", label: "All-in-One Website", icon: Layers, isHub: true },
+  { href: "/?tab=overview", label: "Overview", icon: LayoutDashboard },
+  { href: "/?tab=sleep", label: "Sleep Tracker", icon: Moon },
+  { href: "/?tab=activity", label: "Activity & Steps", icon: Activity },
+  { href: "/?tab=nutrition", label: "Nutrition", icon: Utensils },
+  { href: "/?tab=screen-time", label: "Screen Time", icon: Smartphone },
+  { href: "/?tab=habits", label: "Habit Tracker", icon: CheckSquare },
+  { href: "/?tab=analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/?tab=settings", label: "Settings", icon: Settings },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -299,12 +301,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* MOBILE BOTTOM NAVIGATION BAR */}
       <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-[#101010]/95 backdrop-blur-xl border-t border-[#292929] py-2 px-3 flex items-center justify-around pointer-events-auto">
         {[
-          { href: "/", label: "Overview", icon: LayoutDashboard },
-          { href: "/sleep", label: "Sleep", icon: Moon },
-          { href: "/activity", label: "Activity", icon: Activity },
-          { href: "/nutrition", label: "Food", icon: Utensils },
-          { href: "/habits", label: "Habits", icon: CheckSquare },
-          { href: "/analytics", label: "Analytics", icon: BarChart3 },
+          { href: "/?tab=all", label: "Hub", icon: Layers },
+          { href: "/?tab=overview", label: "Overview", icon: LayoutDashboard },
+          { href: "/?tab=sleep", label: "Sleep", icon: Moon },
+          { href: "/?tab=activity", label: "Activity", icon: Activity },
+          { href: "/?tab=nutrition", label: "Food", icon: Utensils },
+          { href: "/?tab=habits", label: "Habits", icon: CheckSquare },
+          { href: "/?tab=analytics", label: "Analytics", icon: BarChart3 },
         ].map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;

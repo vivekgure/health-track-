@@ -50,23 +50,40 @@ export async function getCurrentUser(request?: Request) {
     }
   }
 
-  if (!token) return null;
+  if (token) {
+    const payload = await verifySessionToken(token);
+    if (payload?.userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        include: {
+          profile: true,
+        },
+      });
 
-  const payload = await verifySessionToken(token);
-  if (!payload?.userId) return null;
+      if (user) {
+        // Don't expose password hash
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { passwordHash, ...safeUser } = user;
+        return safeUser;
+      }
+    }
+  }
 
-  const user = await prisma.user.findUnique({
-    where: { id: payload.userId },
+  // PUBLIC ACCESS ("FOR ALL"):
+  // Gracefully fall back to demo operative user so public visitors immediately access the full platform
+  const demoUser = await prisma.user.findUnique({
+    where: { email: "demo@lifesync.app" },
     include: {
       profile: true,
     },
   });
 
-  if (!user) return null;
+  if (demoUser) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, ...safeUser } = demoUser;
+    return safeUser;
+  }
 
-  // Don't expose password hash
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { passwordHash, ...safeUser } = user;
-  return safeUser;
+  return null;
 }
 

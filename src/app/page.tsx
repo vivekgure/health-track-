@@ -21,6 +21,8 @@ import {
   CheckCircle2,
   Circle,
   Award,
+  Layers,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -35,6 +37,13 @@ import LogActivityModal from "@/components/modals/LogActivityModal";
 import LogFoodModal from "@/components/modals/LogFoodModal";
 import FocusTimerModal from "@/components/modals/FocusTimerModal";
 import WebSpinner from "@/components/common/WebSpinner";
+import SleepPage from "@/app/sleep/page";
+import ActivityPage from "@/app/activity/page";
+import NutritionPage from "@/app/nutrition/page";
+import ScreenTimePage from "@/app/screen-time/page";
+import HabitsPage from "@/app/habits/page";
+import AnalyticsPage from "@/app/analytics/page";
+import SettingsPage from "@/app/settings/page";
 
 interface OverviewData {
   user: { name: string; email: string };
@@ -80,11 +89,24 @@ interface OverviewData {
   weeklyTrends: { day: string; date: string; steps: number; calories: number }[];
 }
 
+const TABS = [
+  { id: "all", label: "🌟 All-in-One Website", icon: Layers, isHub: true },
+  { id: "overview", label: "Overview", icon: Award },
+  { id: "sleep", label: "Sleep Tracker", icon: Moon },
+  { id: "activity", label: "Activity & Steps", icon: Activity },
+  { id: "nutrition", label: "Nutrition & Macros", icon: Utensils },
+  { id: "screen-time", label: "Screen Time", icon: Smartphone },
+  { id: "habits", label: "Habit Tracker", icon: CheckSquare },
+  { id: "analytics", label: "Analytics & Trends", icon: Sparkles },
+  { id: "settings", label: "Settings", icon: SettingsIcon },
+];
+
 export default function OverviewPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { isSleeping, startSleep, setShowSleepOverlay } = useSleep();
 
+  const [activeTab, setActiveTab] = useState<string>("all");
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [addingWater, setAddingWater] = useState(false);
@@ -100,23 +122,51 @@ export default function OverviewPage() {
       if (res.ok) {
         const json = await res.json();
         setData(json);
-      } else if (res.status === 401) {
-        router.push("/login");
       }
     } catch (e) {
       console.error("Overview fetch error:", e);
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login");
-    } else if (user) {
-      fetchOverview();
+    fetchOverview();
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam && TABS.some((t) => t.id === tabParam)) {
+        setActiveTab(tabParam);
+      } else if (window.location.hash) {
+        const hash = window.location.hash.replace("#", "");
+        if (TABS.some((t) => t.id === hash)) {
+          setActiveTab(hash);
+        }
+      }
     }
-  }, [user, authLoading, router, fetchOverview]);
+  }, [fetchOverview]);
+
+  const handleSelectTab = (tabId: string) => {
+    setActiveTab(tabId);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tabId === "all") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tabId);
+      }
+      window.history.replaceState({}, "", url.toString());
+
+      if (tabId === "all") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        const el = document.getElementById(tabId);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    }
+  };
 
   const handleQuickAddWater = async (amount = 250) => {
     setAddingWater(true);
@@ -201,7 +251,7 @@ export default function OverviewPage() {
   const screenPts = data.screenTime.totalMinutes <= data.screenTime.limitMinutes ? 15 : 10;
   const wellnessScore = Math.min(100, sleepPts + stepPts + nutritionPts + habitPts + screenPts);
 
-  return (
+  const renderOverviewSection = () => (
     <div className="space-y-6 sm:space-y-8 animate-fadeIn">
       {/* Quick Action Modals */}
       <LogActivityModal
@@ -687,16 +737,208 @@ export default function OverviewPage() {
           </div>
 
           <div className="pt-4 border-t border-[#292929] mt-4">
-            <Link
-              href="/habits"
+            <button
+              onClick={() => handleSelectTab("habits")}
               className="w-full py-2.5 px-3 rounded-xl bg-[#101010] hover:bg-[#1A1A1A] text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 border border-[#292929] hover:border-[#FF2638]/40"
             >
               <span>Manage Habits & Streaks</span>
               <ArrowUpRight className="w-3.5 h-3.5 text-[#FF2638]" />
-            </Link>
+            </button>
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6 sm:space-y-8 animate-fadeIn">
+      {/* UNIFIED ALL-IN-ONE TAB BAR */}
+      <div className="sticky top-16 z-20 py-2.5 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 bg-[#080808]/90 backdrop-blur-xl border-b border-[#292929]">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-none max-w-7xl mx-auto">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleSelectTab(tab.id)}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all shrink-0 ${
+                  isActive
+                    ? "bg-gradient-to-r from-[#B5121B] to-[#FF2638] text-white shadow-[0_0_16px_rgba(255,38,56,0.4)] border border-[#FF2638]/60"
+                    : "bg-[#151515] text-[#999999] hover:text-white hover:border-[#FF2638]/40 border border-[#292929]"
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-[#FF2638]"}`} />
+                <span>{tab.label}</span>
+                {tab.isHub && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[9px] uppercase tracking-wider text-white font-extrabold ml-1">
+                    Hub
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* CONTENT BASED ON ACTIVE TAB */}
+      {activeTab === "all" ? (
+        <div className="space-y-16">
+          {/* 1. OVERVIEW */}
+          <section id="overview" className="scroll-mt-36">
+            {renderOverviewSection()}
+          </section>
+
+          {/* SECTION DIVIDER */}
+          <div className="relative flex items-center justify-between py-3 border-t border-[#292929]">
+            <div className="flex items-center gap-2 text-xs font-black text-[#FF2638] uppercase tracking-widest">
+              <Moon className="w-4 h-4" />
+              <span>02 &bull; Sleep Sanctuary & Circadian Rhythm</span>
+            </div>
+            <button
+              onClick={() => handleSelectTab("sleep")}
+              className="text-xs text-[#999999] hover:text-[#FF2638] font-bold"
+            >
+              Focus this section &rarr;
+            </button>
+          </div>
+
+          {/* 2. SLEEP TRACKER */}
+          <section id="sleep" className="scroll-mt-36">
+            <SleepPage />
+          </section>
+
+          {/* SECTION DIVIDER */}
+          <div className="relative flex items-center justify-between py-3 border-t border-[#292929]">
+            <div className="flex items-center gap-2 text-xs font-black text-[#FF2638] uppercase tracking-widest">
+              <Activity className="w-4 h-4" />
+              <span>03 &bull; Physical Activity & Step Tracking</span>
+            </div>
+            <button
+              onClick={() => handleSelectTab("activity")}
+              className="text-xs text-[#999999] hover:text-[#FF2638] font-bold"
+            >
+              Focus this section &rarr;
+            </button>
+          </div>
+
+          {/* 3. ACTIVITY & STEPS */}
+          <section id="activity" className="scroll-mt-36">
+            <ActivityPage />
+          </section>
+
+          {/* SECTION DIVIDER */}
+          <div className="relative flex items-center justify-between py-3 border-t border-[#292929]">
+            <div className="flex items-center gap-2 text-xs font-black text-[#FF2638] uppercase tracking-widest">
+              <Utensils className="w-4 h-4" />
+              <span>04 &bull; Nutrition Diary & Caloric Intake</span>
+            </div>
+            <button
+              onClick={() => handleSelectTab("nutrition")}
+              className="text-xs text-[#999999] hover:text-[#FF2638] font-bold"
+            >
+              Focus this section &rarr;
+            </button>
+          </div>
+
+          {/* 4. NUTRITION */}
+          <section id="nutrition" className="scroll-mt-36">
+            <NutritionPage />
+          </section>
+
+          {/* SECTION DIVIDER */}
+          <div className="relative flex items-center justify-between py-3 border-t border-[#292929]">
+            <div className="flex items-center gap-2 text-xs font-black text-[#FF2638] uppercase tracking-widest">
+              <Smartphone className="w-4 h-4" />
+              <span>05 &bull; Screen Time & Focus Shield</span>
+            </div>
+            <button
+              onClick={() => handleSelectTab("screen-time")}
+              className="text-xs text-[#999999] hover:text-[#FF2638] font-bold"
+            >
+              Focus this section &rarr;
+            </button>
+          </div>
+
+          {/* 5. SCREEN TIME */}
+          <section id="screen-time" className="scroll-mt-36">
+            <ScreenTimePage />
+          </section>
+
+          {/* SECTION DIVIDER */}
+          <div className="relative flex items-center justify-between py-3 border-t border-[#292929]">
+            <div className="flex items-center gap-2 text-xs font-black text-[#FF2638] uppercase tracking-widest">
+              <CheckSquare className="w-4 h-4" />
+              <span>06 &bull; Daily Habit Tracker & Streaks</span>
+            </div>
+            <button
+              onClick={() => handleSelectTab("habits")}
+              className="text-xs text-[#999999] hover:text-[#FF2638] font-bold"
+            >
+              Focus this section &rarr;
+            </button>
+          </div>
+
+          {/* 6. HABITS */}
+          <section id="habits" className="scroll-mt-36">
+            <HabitsPage />
+          </section>
+
+          {/* SECTION DIVIDER */}
+          <div className="relative flex items-center justify-between py-3 border-t border-[#292929]">
+            <div className="flex items-center gap-2 text-xs font-black text-[#FF2638] uppercase tracking-widest">
+              <Sparkles className="w-4 h-4" />
+              <span>07 &bull; Deep Analytics & Performance Trends</span>
+            </div>
+            <button
+              onClick={() => handleSelectTab("analytics")}
+              className="text-xs text-[#999999] hover:text-[#FF2638] font-bold"
+            >
+              Focus this section &rarr;
+            </button>
+          </div>
+
+          {/* 7. ANALYTICS */}
+          <section id="analytics" className="scroll-mt-36">
+            <AnalyticsPage />
+          </section>
+
+          {/* SECTION DIVIDER */}
+          <div className="relative flex items-center justify-between py-3 border-t border-[#292929]">
+            <div className="flex items-center gap-2 text-xs font-black text-[#FF2638] uppercase tracking-widest">
+              <SettingsIcon className="w-4 h-4" />
+              <span>08 &bull; Biometric Settings & Preferences</span>
+            </div>
+            <button
+              onClick={() => handleSelectTab("settings")}
+              className="text-xs text-[#999999] hover:text-[#FF2638] font-bold"
+            >
+              Focus this section &rarr;
+            </button>
+          </div>
+
+          {/* 8. SETTINGS */}
+          <section id="settings" className="scroll-mt-36">
+            <SettingsPage />
+          </section>
+        </div>
+      ) : activeTab === "overview" ? (
+        renderOverviewSection()
+      ) : activeTab === "sleep" ? (
+        <SleepPage />
+      ) : activeTab === "activity" ? (
+        <ActivityPage />
+      ) : activeTab === "nutrition" ? (
+        <NutritionPage />
+      ) : activeTab === "screen-time" ? (
+        <ScreenTimePage />
+      ) : activeTab === "habits" ? (
+        <HabitsPage />
+      ) : activeTab === "analytics" ? (
+        <AnalyticsPage />
+      ) : (
+        <SettingsPage />
+      )}
     </div>
   );
 }
