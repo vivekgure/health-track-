@@ -133,22 +133,32 @@ export default function OverviewPage() {
 
   useEffect(() => {
     fetchOverview();
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("googleAuth") === "success") {
-        setGoogleAuthToast("Google Account verified and connected! Welcome to LifeSync.");
-        setTimeout(() => setGoogleAuthToast(""), 5000);
-      }
-      const tabParam = params.get("tab");
-      if (tabParam && TABS.some((t) => t.id === tabParam)) {
-        setActiveTab(tabParam);
-      } else if (window.location.hash) {
-        const hash = window.location.hash.replace("#", "");
-        if (TABS.some((t) => t.id === hash)) {
-          setActiveTab(hash);
+    const handleUrlChange = () => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("googleAuth") === "success") {
+          setGoogleAuthToast("Google Account verified and connected! Welcome to LifeSync.");
+          setTimeout(() => setGoogleAuthToast(""), 5000);
+        }
+        const tabParam = params.get("tab");
+        if (tabParam && TABS.some((t) => t.id === tabParam)) {
+          setActiveTab(tabParam);
+        } else if (window.location.hash) {
+          const hash = window.location.hash.replace("#", "");
+          if (TABS.some((t) => t.id === hash)) {
+            setActiveTab(hash);
+          }
         }
       }
-    }
+    };
+
+    handleUrlChange();
+    window.addEventListener("popstate", handleUrlChange);
+    window.addEventListener("hashchange", handleUrlChange);
+    return () => {
+      window.removeEventListener("popstate", handleUrlChange);
+      window.removeEventListener("hashchange", handleUrlChange);
+    };
   }, [fetchOverview]);
 
   const handleSelectTab = (tabId: string) => {

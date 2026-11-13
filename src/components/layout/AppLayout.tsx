@@ -24,7 +24,6 @@ import {
   Heart,
   Radio,
   Sparkles,
-  Layers,
 } from "lucide-react";
 import ActiveSleepModal from "@/components/sleep/ActiveSleepModal";
 import LogActivityModal from "@/components/modals/LogActivityModal";
@@ -33,16 +32,15 @@ import FocusTimerModal from "@/components/modals/FocusTimerModal";
 import CreateHabitModal from "@/components/modals/CreateHabitModal";
 import SpiderWebCorner from "@/components/common/SpiderWebCorner";
 
-const NAV_ITEMS = [
-  { href: "/?tab=all", label: "All-in-One Website", icon: Layers, isHub: true },
-  { href: "/?tab=overview", label: "Overview", icon: LayoutDashboard },
-  { href: "/?tab=sleep", label: "Sleep Tracker", icon: Moon },
-  { href: "/?tab=activity", label: "Activity & Steps", icon: Activity },
-  { href: "/?tab=nutrition", label: "Nutrition", icon: Utensils },
-  { href: "/?tab=screen-time", label: "Screen Time", icon: Smartphone },
-  { href: "/?tab=habits", label: "Habit Tracker", icon: CheckSquare },
-  { href: "/?tab=analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/?tab=settings", label: "Settings", icon: Settings },
+export const NAV_ITEMS = [
+  { href: "/", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/sleep", label: "Sleep Tracker", icon: Moon },
+  { href: "/activity", label: "Activity & Steps", icon: Activity },
+  { href: "/nutrition", label: "Nutrition", icon: Utensils },
+  { href: "/screen-time", label: "Screen Time", icon: Smartphone },
+  { href: "/habits", label: "Habit Tracker", icon: CheckSquare },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -75,6 +73,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
     );
   }
+
+  const checkIsActive = (href: string, exact?: boolean) => {
+    if (exact) {
+      return pathname === href;
+    }
+    return pathname === href || pathname.startsWith(href + "/");
+  };
 
   return (
     <div className="min-h-screen bg-[#080808] text-[#F5F5F5] spider-grid-overlay relative transition-colors duration-200 pointer-events-auto">
@@ -126,8 +131,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       )}
 
       <div className={`flex min-h-screen relative z-10 pointer-events-auto ${isSleeping ? "pt-10" : ""}`}>
-        {/* DESKTOP SIDEBAR */}
-        <aside className="hidden lg:flex flex-col w-64 bg-[#101010] border-r border-[#292929] p-5 shrink-0 sticky top-0 h-screen z-30 pointer-events-auto">
+        {/* DESKTOP / TABLET SIDEBAR */}
+        <aside className="hidden md:flex flex-col w-64 bg-[#101010] border-r border-[#292929] p-5 shrink-0 sticky top-0 h-screen z-30 pointer-events-auto select-none">
           {/* Spider Web Emblem Brand Logo */}
           <Link href="/" className="flex items-center gap-3 px-2 py-3 mb-6 group">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#B5121B] via-[#FF2638] to-[#5C080D] flex items-center justify-center shadow-[0_0_16px_rgba(255,38,56,0.35)] group-hover:scale-105 transition-transform border border-[#FF2638]/40">
@@ -154,7 +159,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Navigation Links */}
           <nav className="flex-1 space-y-1.5 overflow-y-auto pr-1">
             {NAV_ITEMS.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = checkIsActive(item.href, item.exact);
               const Icon = item.icon;
               return (
                 <Link
@@ -180,7 +185,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="pt-4 border-t border-[#292929] mt-2">
             <button
               onClick={() => setQuickActionOpen(true)}
-              className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#B5121B] to-[#FF2638] hover:from-[#C91620] hover:to-[#FF3D4E] text-white text-xs font-bold shadow-[0_0_16px_rgba(255,38,56,0.35)] transition-all flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-2xl bg-gradient-to-r from-[#B5121B] to-[#FF2638] hover:from-[#C91620] hover:to-[#FF3D4E] text-white text-xs font-bold shadow-[0_0_16px_rgba(255,38,56,0.35)] transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>Quick Log Activity / Meal</span>
@@ -202,7 +207,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Link>
             <button
               onClick={logout}
-              className="p-1.5 rounded-xl hover:bg-rose-500/10 text-[#999999] hover:text-[#FF2638] transition-colors"
+              className="p-1.5 rounded-xl hover:bg-rose-500/10 text-[#999999] hover:text-[#FF2638] transition-colors cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -211,14 +216,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* MAIN CONTENT AREA */}
-        <div className="flex-1 flex flex-col min-w-0 pb-20 lg:pb-8">
+        <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-8">
           {/* TOP BAR */}
           <header className="h-16 px-4 sm:px-8 border-b border-[#292929] bg-[#080808]/90 backdrop-blur-md sticky top-0 z-20 flex items-center justify-between">
             {/* Mobile Brand & Hamburger */}
-            <div className="flex items-center gap-3 lg:hidden">
+            <div className="flex items-center gap-3 md:hidden">
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="p-2 rounded-xl bg-[#151515] text-[#999999] border border-[#292929]"
+                className="p-2 rounded-xl bg-[#151515] text-[#999999] border border-[#292929] cursor-pointer"
+                aria-label="Open navigation menu"
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -232,11 +238,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
 
-            {/* Current Section Title (Desktop) */}
-            <div className="hidden lg:flex items-center gap-2">
+            {/* Current Section Title */}
+            <div className="hidden md:flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#FF2638] shadow-[0_0_8px_#FF2638]" />
               <h1 className="text-sm font-semibold text-[#999999] tracking-wide uppercase">
-                {NAV_ITEMS.find((n) => n.href === pathname)?.label || "Dashboard"}
+                {NAV_ITEMS.find((n) => checkIsActive(n.href, n.exact))?.label || "Dashboard"}
               </h1>
             </div>
 
@@ -251,36 +257,38 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     router.push("/sleep");
                   }
                 }}
-                className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   isSleeping
-                    ? "bg-[#1A0507] border-[#FF2638] text-[#FF2638] shadow-[0_0_14px_rgba(255,38,56,0.3)]"
-                    : "bg-[#101010] border-[#292929] text-[#999999] hover:border-[#FF2638]/50 hover:text-white"
+                    ? "bg-[#FF2638] text-white shadow-[0_0_15px_#FF2638] animate-pulse"
+                    : "bg-[#151515] hover:bg-[#1A0507] text-[#FF2638] border border-[#FF2638]/40 hover:border-[#FF2638]"
                 }`}
               >
-                <Moon className="w-3.5 h-3.5 text-[#FF2638]" />
-                <span>{isSleeping ? "Sleep Mode (Active)" : "Sleep Sanctuary"}</span>
+                <Moon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">
+                  {isSleeping ? "Sleep Screen" : "Sleep Mode"}
+                </span>
               </button>
 
-              {/* Theme Toggle (supports Red & Black dark mode) */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-2xl bg-[#101010] border border-[#292929] text-[#999999] hover:text-white hover:border-[#FF2638]/40 transition-colors"
-                title={`Theme: ${theme} (Red & Black Cybernetic)`}
-              >
-                {theme === "dark" ? <Sun className="w-4 h-4 text-[#FF2638]" /> : <Moon className="w-4 h-4 text-[#FF2638]" />}
-              </button>
-
-              {/* Quick Add Button with Red Glow */}
+              {/* Quick Log Button */}
               <button
                 onClick={() => setQuickActionOpen(true)}
-                className="p-2 rounded-2xl bg-[#B5121B]/15 border border-[#FF2638]/40 text-[#FF2638] hover:bg-[#FF2638]/25 hover:shadow-[0_0_12px_rgba(255,38,56,0.4)] transition-all"
-                title="Quick Log"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#B5121B] to-[#FF2638] text-white text-xs font-bold shadow-[0_0_12px_rgba(255,38,56,0.3)] cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Quick Log</span>
+              </button>
+
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-xl bg-[#151515] border border-[#292929] hover:border-[#FF2638]/40 text-[#999999] hover:text-[#FF2638] transition-colors cursor-pointer"
+                title={`Toggle theme (currently ${theme})`}
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
 
               {/* User Avatar (Mobile) */}
-              <div className="lg:hidden">
+              <div className="md:hidden">
                 <Link
                   href="/settings"
                   className="w-8 h-8 rounded-full bg-[#151515] border border-[#FF2638]/50 flex items-center justify-center text-[#FF2638] font-bold text-xs"
@@ -292,24 +300,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </header>
 
           {/* PAGE CONTENT */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full relative z-10">
+          <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full relative z-10">
             {children}
           </main>
         </div>
       </div>
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-[#101010]/95 backdrop-blur-xl border-t border-[#292929] py-2 px-3 flex items-center justify-around pointer-events-auto">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[#101010]/95 backdrop-blur-xl border-t border-[#292929] py-2 px-3 flex items-center justify-around pointer-events-auto">
         {[
-          { href: "/?tab=all", label: "Hub", icon: Layers },
-          { href: "/?tab=overview", label: "Overview", icon: LayoutDashboard },
-          { href: "/?tab=sleep", label: "Sleep", icon: Moon },
-          { href: "/?tab=activity", label: "Activity", icon: Activity },
-          { href: "/?tab=nutrition", label: "Food", icon: Utensils },
-          { href: "/?tab=habits", label: "Habits", icon: CheckSquare },
-          { href: "/?tab=analytics", label: "Analytics", icon: BarChart3 },
+          { href: "/", label: "Overview", icon: LayoutDashboard, exact: true },
+          { href: "/sleep", label: "Sleep", icon: Moon },
+          { href: "/activity", label: "Activity", icon: Activity },
+          { href: "/nutrition", label: "Food", icon: Utensils },
+          { href: "/habits", label: "Habits", icon: CheckSquare },
+          { href: "/analytics", label: "Analytics", icon: BarChart3 },
+          { href: "/settings", label: "Settings", icon: Settings },
         ].map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = checkIsActive(item.href, item.exact);
           const Icon = item.icon;
           return (
             <Link
@@ -335,7 +343,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* MOBILE DRAWER MENU */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <div
             className="fixed inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => setMobileMenuOpen(false)}
@@ -358,7 +366,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 rounded-xl hover:bg-[#151515] text-[#999999]"
+                  className="p-1.5 rounded-xl hover:bg-[#151515] text-[#999999] cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -366,7 +374,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
               <div className="space-y-1">
                 {NAV_ITEMS.map((item) => {
-                  const isActive = pathname === item.href;
+                  const isActive = checkIsActive(item.href, item.exact);
                   const Icon = item.icon;
                   return (
                     <Link
@@ -390,7 +398,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="pt-6 border-t border-[#292929]">
               <button
                 onClick={logout}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-[#B5121B]/15 text-[#FF2638] hover:bg-[#B5121B]/25 text-xs font-semibold border border-[#FF2638]/30"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-[#B5121B]/15 text-[#FF2638] hover:bg-[#B5121B]/25 text-xs font-semibold border border-[#FF2638]/30 cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>
@@ -411,7 +419,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </h3>
               <button
                 onClick={() => setQuickActionOpen(false)}
-                className="p-1 rounded-xl hover:bg-[#101010] text-[#999999]"
+                className="p-1 rounded-xl hover:bg-[#101010] text-[#999999] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -423,7 +431,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   setQuickActionOpen(false);
                   setShowActivityModal(true);
                 }}
-                className="p-3.5 rounded-2xl bg-[#101010] hover:bg-[#1A0507] border border-[#292929] hover:border-[#FF2638]/50 text-left transition-all group"
+                className="p-3.5 rounded-2xl bg-[#101010] hover:bg-[#1A0507] border border-[#292929] hover:border-[#FF2638]/50 text-left transition-all group cursor-pointer"
               >
                 <Activity className="w-5 h-5 text-[#FF2638] mb-2 group-hover:scale-110 transition-transform" />
                 <p className="text-xs font-bold text-white">Log Activity</p>
@@ -435,7 +443,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   setQuickActionOpen(false);
                   setShowFoodModal(true);
                 }}
-                className="p-3.5 rounded-2xl bg-[#101010] hover:bg-[#1A0507] border border-[#292929] hover:border-[#FF2638]/50 text-left transition-all group"
+                className="p-3.5 rounded-2xl bg-[#101010] hover:bg-[#1A0507] border border-[#292929] hover:border-[#FF2638]/50 text-left transition-all group cursor-pointer"
               >
                 <Utensils className="w-5 h-5 text-[#FF2638] mb-2 group-hover:scale-110 transition-transform" />
                 <p className="text-xs font-bold text-white">Log Meal</p>
@@ -447,11 +455,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   setQuickActionOpen(false);
                   setShowFocusModal(true);
                 }}
-                className="p-3.5 rounded-2xl bg-[#101010] hover:bg-[#1A0507] border border-[#292929] hover:border-[#FF2638]/50 text-left transition-all group"
+                className="p-3.5 rounded-2xl bg-[#101010] hover:bg-[#1A0507] border border-[#292929] hover:border-[#FF2638]/50 text-left transition-all group cursor-pointer"
               >
-                <Play className="w-5 h-5 text-[#FF2638] mb-2 group-hover:scale-110 transition-transform" />
-                <p className="text-xs font-bold text-white">Focus Timer</p>
-                <p className="text-[10px] text-[#999999]">Pomodoro & flow</p>
+                <Smartphone className="w-5 h-5 text-[#FF2638] mb-2 group-hover:scale-110 transition-transform" />
+                <p className="text-xs font-bold text-white">Focus Mode</p>
+                <p className="text-[10px] text-[#999999]">Mindful session</p>
               </button>
 
               <button
@@ -459,11 +467,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   setQuickActionOpen(false);
                   setShowHabitModal(true);
                 }}
-                className="p-3.5 rounded-2xl bg-[#101010] hover:bg-[#1A0507] border border-[#292929] hover:border-[#FF2638]/50 text-left transition-all group"
+                className="p-3.5 rounded-2xl bg-[#101010] hover:bg-[#1A0507] border border-[#292929] hover:border-[#FF2638]/50 text-left transition-all group cursor-pointer"
               >
                 <CheckSquare className="w-5 h-5 text-[#FF2638] mb-2 group-hover:scale-110 transition-transform" />
                 <p className="text-xs font-bold text-white">New Habit</p>
-                <p className="text-[10px] text-[#999999]">Build daily routine</p>
+                <p className="text-[10px] text-[#999999]">Create streak</p>
               </button>
             </div>
           </div>
