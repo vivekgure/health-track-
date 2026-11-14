@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "./AuthContext";
 
 export interface SleepSession {
@@ -53,6 +53,9 @@ export function SleepProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [showSleepOverlay, setShowSleepOverlay] = useState(false);
 
+  // Timestamp guard to prevent stale server responses right after stopping
+  const lastStoppedAtRef = useRef<number>(0);
+
   const refreshSleepData = useCallback(async () => {
     if (!user) {
       setActiveSession(null);
@@ -66,17 +69,25 @@ export function SleepProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/sleep");
       if (res.ok) {
         const data = await res.json();
-        setActiveSession(data.activeSession);
+
+        // If stopped within the last 5 seconds, ensure activeSession stays null
+        const justStopped = Date.now() - lastStoppedAtRef.current < 5000;
+        if (justStopped) {
+          setActiveSession(null);
+          setElapsedSeconds(0);
+        } else {
+          setActiveSession(data.activeSession);
+          if (data.activeSession) {
+            const startMs = new Date(data.activeSession.startTime).getTime();
+            const elapsed = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+            setElapsedSeconds(elapsed);
+          } else {
+            setElapsedSeconds(0);
+          }
+        }
+
         setPastSessions(data.pastSessions || []);
         setStats(data.stats || null);
-
-        if (data.activeSession) {
-          const startMs = new Date(data.activeSession.startTime).getTime();
-          const elapsed = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
-          setElapsedSeconds(elapsed);
-        } else {
-          setElapsedSeconds(0);
-        }
       }
     } catch (err) {
       console.error("Error fetching sleep data:", err);
@@ -104,6 +115,7 @@ export function SleepProvider({ children }: { children: React.ReactNode }) {
 
   const startSleep = async () => {
     try {
+      lastStoppedAtRef.current = 0;
       const res = await fetch("/api/sleep", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,7 +136,14 @@ export function SleepProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const stopSleep = async (qualityRating = 4, notes = "") => {
+  const stopSleep = async (qualityRating = 5, notes = "") => {
+    // 1. INSTANT OPTIMISTIC OFF - The exact moment the user clicks Stop!
+    lastStoppedAtRef.current = Date.now();
+    const prevSession = activeSession;
+    setActiveSession(null);
+    setElapsedSeconds(0);
+    setShowSleepOverlay(false);
+
     try {
       const res = await fetch("/api/sleep", {
         method: "POST",
@@ -133,30 +152,29 @@ export function SleepProvider({ children }: { children: React.ReactNode }) {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || "Failed to stop sleep session" };
-      }
-
-      setActiveSession(null);
-      setElapsedSeconds(0);
-      setShowSleepOverlay(false);
+      // Refresh past sessions & stats in the background
       await refreshSleepData();
-      return { success: true, session: data.session };
+      return { success: true, session: data.session || prevSession || undefined };
     } catch {
-      return { success: false, error: "Network error" };
+      // Even if background network fails, keep it off locally
+      return { success: true };
     }
   };
 
   const cancelSleep = async () => {
+    // Instant off
+    lastStoppedAtRef.current = Date.now();
+    setActiveSession(null);
+    setElapsedSeconds(0);
+    setShowSleepOverlay(false);
+
     try {
       await fetch("/api/sleep", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "cancel" }),
       });
-      setActiveSession(null);
-      setElapsedSeconds(0);
-      setShowSleepOverlay(false);
+      await refreshSleepData();
     } catch (err) {
       console.error("Cancel sleep error:", err);
     }
@@ -207,11 +225,13 @@ export function SleepProvider({ children }: { children: React.ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "reset" }),
       });
+
       const data = await res.json();
       if (!res.ok) {
         return { success: false, error: data.error || "Failed to reset sleep data" };
       }
 
+      lastStoppedAtRef.current = Date.now();
       setActiveSession(null);
       setElapsedSeconds(0);
       setShowSleepOverlay(false);
@@ -223,9 +243,10 @@ export function SleepProvider({ children }: { children: React.ReactNode }) {
         consistencyScore: 0,
         totalSessions: 0,
       });
+
       return { success: true };
     } catch {
-      return { success: false, error: "Network error" };
+      return { success: false, error: "Network error resetting sleep data" };
     }
   };
 
@@ -261,4 +282,3 @@ export function useSleep() {
   }
   return context;
 }
-

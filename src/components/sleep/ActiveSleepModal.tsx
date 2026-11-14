@@ -17,7 +17,6 @@ export default function ActiveSleepModal() {
     cancelSleep,
   } = useSleep();
 
-  const [confirmingStop, setConfirmingStop] = useState(false);
   const [qualityRating, setQualityRating] = useState(5);
   const [sleepNotes, setSleepNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -38,22 +37,21 @@ export default function ActiveSleepModal() {
     hour12: true,
   });
 
-  const handleConfirmWakeUp = async () => {
+  const handleInstantWakeUp = async () => {
     setSubmitting(true);
-    const res = await stopSleep(qualityRating, sleepNotes);
+    // Turns off immediately via optimistic update inside stopSleep
+    await stopSleep(qualityRating, sleepNotes);
     setSubmitting(false);
-    if (res.success) {
-      setConfirmingStop(false);
-      try {
-        confetti({
-          particleCount: 60,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ["#FF2638", "#B5121B", "#FFFFFF"],
-        });
-      } catch {
-        // ignore
-      }
+
+    try {
+      confetti({
+        particleCount: 65,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ["#FF2638", "#B5121B", "#FFFFFF"],
+      });
+    } catch {
+      // ignore
     }
   };
 
@@ -94,128 +92,78 @@ export default function ActiveSleepModal() {
       <div className="absolute top-6 right-6 flex items-center gap-3 z-10">
         <button
           onClick={() => setShowSleepOverlay(false)}
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#151515] hover:bg-[#1C1C1C] text-[#999999] hover:text-white text-sm border border-[#292929] hover:border-[#FF2638]/40 transition-colors shadow-lg"
-          title="Minimize sleep sanctuary (tracking remains active)"
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#151515] hover:bg-[#1C1C1C] text-[#999999] hover:text-white text-sm border border-[#292929] hover:border-[#FF2638]/40 transition-colors shadow-lg cursor-pointer"
+          title="Minimize sleep sanctuary (tracking remains active in background)"
         >
           <Minimize2 className="w-4 h-4" />
           <span>Minimize</span>
         </button>
       </div>
 
-      {/* Main Sanctuary Container */}
-      <div className="relative max-w-lg w-full flex flex-col items-center text-center p-6 sm:p-8 z-10">
-        {/* Glowing Crimson Moon & Spider Web Orb */}
+      {/* Main Sleep Sanctuary Centerpiece */}
+      <div className="relative z-10 flex flex-col items-center text-center max-w-lg w-full px-4">
+        {/* Soft Animated Moon & Web Crest */}
         <div className="relative mb-6">
-          <div className="absolute -inset-6 bg-[#FF2638]/20 rounded-full blur-2xl animate-pulse-slow"></div>
-          <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-gradient-to-tr from-[#080808] via-[#1A0507] to-[#2B080B] border-2 border-[#FF2638]/60 shadow-[0_0_50px_rgba(255,38,56,0.4)] flex items-center justify-center">
-            <Moon className="w-16 h-16 sm:w-20 sm:h-20 text-[#FF2638] drop-shadow-[0_0_20px_rgba(255,38,56,0.9)] fill-[#FF2638]/15" />
+          <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-[#B5121B]/40 via-[#FF2638]/20 to-transparent flex items-center justify-center border border-[#FF2638]/40 shadow-[0_0_50px_rgba(255,38,56,0.35)] animate-pulse">
+            <Moon className="w-14 h-14 text-white drop-shadow-[0_0_15px_#FF2638]" />
           </div>
-        </div>
-
-        {/* Status Pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#151515] border border-[#FF2638]/40 text-[#FF2638] text-xs sm:text-sm font-bold mb-4 shadow-[0_0_12px_rgba(255,38,56,0.2)]">
-          <span className="w-2 h-2 rounded-full bg-[#FF2638] animate-ping"></span>
-          <span>Spider Sleep Mode &bull; Initiated at {startTimeStr}</span>
+          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#151515] border border-[#FF2638]/60 text-[10px] font-bold text-[#FF2638] uppercase tracking-widest whitespace-nowrap shadow-md">
+            Resting &bull; {startTimeStr}
+          </span>
         </div>
 
         {/* Live Elapsed Time Counter */}
-        <div className="mb-2">
+        <div className="mb-3">
           <div className="font-mono text-5xl sm:text-6xl md:text-7xl font-black tracking-tight text-white drop-shadow-[0_0_25px_rgba(255,38,56,0.3)]">
             {pad(hours)}<span className="text-[#FF2638] animate-pulse">:</span>{pad(minutes)}<span className="text-[#FF2638] animate-pulse">:</span>{pad(seconds)}
           </div>
-          <p className="text-[#999999] text-xs sm:text-sm tracking-wider uppercase mt-2">
+          <p className="text-[#999999] text-xs sm:text-sm tracking-wider uppercase mt-1">
             Hours &bull; Minutes &bull; Seconds of Circadian Recovery
           </p>
         </div>
 
-        <p className="text-[#999999] text-sm max-w-sm mt-3 mb-8 leading-relaxed">
-          Cinematic dark screen active to preserve melatonin production. Your rest data is securely stored in your local database.
-        </p>
-
-        {/* Prominent Action Controls */}
-        {!confirmingStop ? (
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs">
-            <button
-              onClick={() => setConfirmingStop(true)}
-              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#B5121B] via-[#FF2638] to-[#B5121B] hover:from-[#C91620] hover:via-[#FF3D4E] hover:to-[#C91620] text-white font-black text-base shadow-[0_0_30px_rgba(255,38,56,0.55)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 border border-[#FF2638]/50"
-            >
-              <Check className="w-5 h-5 stroke-[2.5]" />
-              <span>STOP SLEEP (I&apos;M AWAKE)</span>
-            </button>
-            <button
-              onClick={cancelSleep}
-              className="w-full sm:w-auto py-2.5 px-4 rounded-xl text-xs text-[#999999] hover:text-[#FF2638] hover:bg-[#B5121B]/10 transition-colors"
-            >
-              Discard Session
-            </button>
-          </div>
-        ) : (
-          /* Confirmation & Morning Rating Modal */
-          <div className="w-full bg-[#151515] border border-[#FF2638]/50 rounded-3xl p-6 shadow-[0_0_40px_rgba(255,38,56,0.3)] backdrop-blur-xl animate-scaleUp">
-            <h3 className="text-lg font-bold text-white mb-1">Morning Awakening 🌅</h3>
-            <p className="text-[#999999] text-xs mb-4">
-              Rate your sleep quality to finalize and log your session.
-            </p>
-
-            {/* Quality Rating Stars */}
-            <div className="flex items-center justify-center gap-2 mb-4">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setQualityRating(star)}
-                  className={`p-2 rounded-xl transition-all ${
-                    qualityRating >= star
-                      ? "text-[#FF2638] scale-110 drop-shadow-[0_0_10px_#FF2638]"
-                      : "text-[#333333] hover:text-[#999999]"
+        {/* Rest Quality Rating Stars right on screen */}
+        <div className="my-4 p-3 rounded-2xl bg-[#101010]/90 border border-[#292929] w-full max-w-xs">
+          <p className="text-[11px] text-[#999999] font-medium mb-1.5">Rest Quality (tap to adjust):</p>
+          <div className="flex items-center justify-center gap-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setQualityRating(star)}
+                className={`p-1 transition-transform hover:scale-125 cursor-pointer ${qualityRating >= star
+                    ? "text-[#FF2638] drop-shadow-[0_0_8px_#FF2638]"
+                    : "text-[#333333] hover:text-[#999999]"
                   }`}
-                >
-                  <Star className="w-7 h-7 fill-current" />
-                </button>
-              ))}
-            </div>
-            <div className="text-xs font-semibold text-[#FF2638] mb-4">
-              {qualityRating === 5 && "⭐ Optimal Restorative Rest"}
-              {qualityRating === 4 && "⭐ Good, Well-Rested Sleep"}
-              {qualityRating === 3 && "⭐ Moderate Sleep"}
-              {qualityRating === 2 && "⭐ Restless / Interrupted"}
-              {qualityRating === 1 && "⭐ Poor / Insomnia"}
-            </div>
-
-            {/* Optional Notes */}
-            <input
-              type="text"
-              value={sleepNotes}
-              onChange={(e) => setSleepNotes(e.target.value)}
-              placeholder="Dream notes or morning energy thoughts..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#101010] border border-[#292929] text-sm text-[#F5F5F5] placeholder-[#666666] mb-5 focus:outline-none focus:border-[#FF2638]"
-            />
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setConfirmingStop(false)}
-                disabled={submitting}
-                className="flex-1 py-2.5 rounded-xl bg-[#101010] hover:bg-[#1A1A1A] text-[#999999] text-sm font-medium border border-[#292929] transition-colors"
               >
-                Keep Sleeping
+                <Star className="w-6 h-6 fill-current" />
               </button>
-              <button
-                type="button"
-                onClick={handleConfirmWakeUp}
-                disabled={submitting}
-                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#B5121B] to-[#FF2638] hover:from-[#C91620] hover:to-[#FF3D4E] text-white text-sm font-bold shadow-[0_0_18px_rgba(255,38,56,0.45)] transition-all disabled:opacity-50"
-              >
-                {submitting ? "Saving..." : "Save Sleep Log"}
-              </button>
-            </div>
+            ))}
           </div>
-        )}
+        </div>
 
-        {/* Clinical Disclaimer Requirement */}
-        <div className="mt-8 flex items-center justify-center gap-1.5 text-[11px] text-[#999999]">
+        {/* PROMINENT ONE-CLICK STOP SLEEP BUTTON */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-sm mt-1">
+          <button
+            onClick={handleInstantWakeUp}
+            disabled={submitting}
+            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#B5121B] via-[#FF2638] to-[#B5121B] hover:from-[#C91620] hover:via-[#FF3D4E] hover:to-[#C91620] text-white font-black text-base shadow-[0_0_35px_rgba(255,38,56,0.6)] transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2.5 border border-[#FF2638]/60 cursor-pointer disabled:opacity-50"
+          >
+            <Check className="w-6 h-6 stroke-[3]" />
+            <span>{submitting ? "STOPPING SLEEP..." : "STOP SLEEP (I'M AWAKE)"}</span>
+          </button>
+          <button
+            onClick={cancelSleep}
+            className="w-full sm:w-auto py-2.5 px-4 rounded-xl text-xs text-[#999999] hover:text-[#FF2638] hover:bg-[#B5121B]/10 transition-colors cursor-pointer"
+          >
+            Discard
+          </button>
+        </div>
+
+        {/* Clinical Disclaimer */}
+        <div className="mt-6 flex items-center justify-center gap-1.5 text-[11px] text-[#999999]">
           <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-[#FF2638]" />
-          <span>Sleep duration is calculated from user start/stop timestamps, not clinical polysomnography.</span>
+          <span>Sleep duration is calculated from user start/stop timestamps.</span>
         </div>
       </div>
     </div>

@@ -104,7 +104,7 @@ const TABS = [
 export default function OverviewPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { isSleeping, startSleep, setShowSleepOverlay } = useSleep();
+  const { isSleeping, startSleep, stopSleep, setShowSleepOverlay } = useSleep();
 
   const [activeTab, setActiveTab] = useState<string>("all");
   const [data, setData] = useState<OverviewData | null>(null);
@@ -345,31 +345,37 @@ export default function OverviewPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {/* Sleep Action */}
         <button
-          onClick={() => {
+          onClick={async () => {
             if (isSleeping) {
-              setShowSleepOverlay(true);
+              await stopSleep();
+              await fetchOverview();
             } else {
-              startSleep();
+              await startSleep();
+              await fetchOverview();
             }
           }}
-          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all group flex flex-col justify-between ${
+          className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all group flex flex-col justify-between cursor-pointer ${
             isSleeping
               ? "bg-[#1A0507] border-[#FF2638] text-[#FF2638] shadow-[0_0_18px_rgba(255,38,56,0.35)]"
               : "bg-[#151515] hover:bg-[#1A0507] border-[#292929] hover:border-[#FF2638]/50 text-[#F5F5F5]"
           }`}
         >
           <div className="flex items-center justify-between mb-2">
-            <div className="p-2 rounded-xl bg-[#B5121B]/20 text-[#FF2638] group-hover:scale-110 transition-transform">
+            <div className={`p-2 rounded-xl ${isSleeping ? "bg-[#FF2638] text-white animate-pulse" : "bg-[#B5121B]/20 text-[#FF2638]"} group-hover:scale-110 transition-transform`}>
               <Moon className="w-4 h-4" />
             </div>
-            {isSleeping && <span className="w-2 h-2 rounded-full bg-[#FF2638] animate-ping" />}
+            {isSleeping && (
+              <span className="px-2 py-0.5 rounded-full bg-[#FF2638] text-white text-[9px] font-black uppercase tracking-wider animate-pulse">
+                Click to Stop
+              </span>
+            )}
           </div>
           <div>
             <p className="text-xs font-bold text-white">
-              {isSleeping ? "Active Sleep Mode" : "Start Sleep Mode"}
+              {isSleeping ? "Stop Sleep (Wake Up)" : "Start Sleep Mode"}
             </p>
             <p className="text-[11px] text-[#999999]">
-              {isSleeping ? "Open dark sanctuary" : "Begin live rest tracking"}
+              {isSleeping ? "Tap to turn off rest mode now" : "Begin live rest tracking"}
             </p>
           </div>
         </button>

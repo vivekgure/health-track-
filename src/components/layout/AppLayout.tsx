@@ -48,7 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { isSleeping, elapsedSeconds, setShowSleepOverlay } = useSleep();
+  const { isSleeping, elapsedSeconds, setShowSleepOverlay, stopSleep } = useSleep();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickActionOpen, setQuickActionOpen] = useState(false);
@@ -111,7 +111,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         onHabitCreated={() => router.refresh()}
       />
 
-      {/* Floating Active Sleep Status Banner */}
+      {/* Floating Active Sleep Status Banner with Instant Stop */}
       {isSleeping && (
         <div className="fixed top-0 inset-x-0 z-40 bg-gradient-to-r from-[#101010]/95 via-[#1A0507]/95 to-[#101010]/95 backdrop-blur-md border-b border-[#FF2638]/40 py-2 px-4 shadow-[0_4px_20px_rgba(255,38,56,0.2)] flex items-center justify-between text-xs sm:text-sm">
           <div className="flex items-center gap-2.5">
@@ -121,12 +121,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {hours}h {mins}m elapsed
             </span>
           </div>
-          <button
-            onClick={() => setShowSleepOverlay(true)}
-            className="px-3.5 py-1 rounded-full bg-gradient-to-r from-[#B5121B] to-[#FF2638] hover:from-[#C91620] hover:to-[#FF3D4E] text-white font-semibold text-xs transition-all shadow-[0_0_12px_rgba(255,38,56,0.4)]"
-          >
-            Open Night Screen &rarr;
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => stopSleep()}
+              className="px-3.5 py-1 rounded-full bg-gradient-to-r from-[#B5121B] to-[#FF2638] hover:from-[#C91620] hover:to-[#FF3D4E] text-white font-bold text-xs transition-all shadow-[0_0_12px_rgba(255,38,56,0.5)] cursor-pointer"
+            >
+              Stop Sleep
+            </button>
+            <button
+              onClick={() => setShowSleepOverlay(true)}
+              className="px-3 py-1 rounded-full bg-[#151515] hover:bg-[#202020] text-[#999999] hover:text-white font-medium text-xs border border-[#292929] transition-all cursor-pointer hidden sm:inline-block"
+            >
+              Night Screen &rarr;
+            </button>
+          </div>
         </div>
       )}
 
@@ -252,7 +260,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => {
                   if (isSleeping) {
-                    setShowSleepOverlay(true);
+                    stopSleep();
                   } else {
                     router.push("/sleep");
                   }
@@ -262,10 +270,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     ? "bg-[#FF2638] text-white shadow-[0_0_15px_#FF2638] animate-pulse"
                     : "bg-[#151515] hover:bg-[#1A0507] text-[#FF2638] border border-[#FF2638]/40 hover:border-[#FF2638]"
                 }`}
+                title={isSleeping ? "Click to stop sleep mode now" : "Go to sleep tracker"}
               >
                 <Moon className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">
-                  {isSleeping ? "Sleep Screen" : "Sleep Mode"}
+                  {isSleeping ? "Stop Sleep" : "Sleep Mode"}
                 </span>
               </button>
 
@@ -470,7 +479,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 className="p-3.5 rounded-2xl bg-[#101010] hover:bg-[#1A0507] border border-[#292929] hover:border-[#FF2638]/50 text-left transition-all group cursor-pointer"
               >
                 <CheckSquare className="w-5 h-5 text-[#FF2638] mb-2 group-hover:scale-110 transition-transform" />
-                <p className="text-xs font-bold text-white">New Habit</p>
+  <p className="text-xs font-bold text-white">New Habit</p>
                 <p className="text-[10px] text-[#999999]">Create streak</p>
               </button>
             </div>

@@ -38,6 +38,7 @@ export default function SleepPage() {
     setShowSleepOverlay,
     startSleep,
     stopSleep,
+    cancelSleep,
     logManualSleep,
     deleteSleepSession,
     resetSleepData,
@@ -75,22 +76,19 @@ export default function SleepPage() {
     }
   };
 
-  const handleConfirmStop = async () => {
+  const handleDirectStop = async () => {
     setSubmittingStop(true);
-    const res = await stopSleep(stopRating, stopNotes);
+    await stopSleep(stopRating, stopNotes);
     setSubmittingStop(false);
-    if (res.success) {
-      setConfirmingStop(false);
-      try {
-        confetti({
-          particleCount: 50,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ["#FF2638", "#B5121B", "#FFFFFF"],
-        });
-      } catch {
-        // ignore
-      }
+    try {
+      confetti({
+        particleCount: 50,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#FF2638", "#B5121B", "#FFFFFF"],
+      });
+    } catch {
+      // ignore
     }
   };
 
@@ -283,67 +281,48 @@ export default function SleepPage() {
             </div>
 
             <div className="flex flex-col gap-3 w-full sm:w-auto">
-              {!confirmingStop ? (
-                <>
-                  <button
-                    onClick={() => setConfirmingStop(true)}
-                    className="py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#B5121B] via-[#FF2638] to-[#B5121B] hover:from-[#C91620] hover:via-[#FF3D4E] hover:to-[#C91620] text-white font-black text-sm shadow-[0_0_20px_rgba(255,38,56,0.45)] transition-all flex items-center justify-center gap-2 border border-[#FF2638]/50"
-                  >
-                    <Check className="w-5 h-5 stroke-[2.5]" />
-                    <span>STOP SLEEP (I&apos;M AWAKE)</span>
-                  </button>
-
-                  <button
-                    onClick={() => setShowSleepOverlay(true)}
-                    className="py-2.5 px-4 rounded-xl bg-[#101010] hover:bg-[#1A1A1A] text-white text-xs font-bold transition-colors flex items-center justify-center gap-2 border border-[#292929]"
-                  >
-                    <Maximize2 className="w-4 h-4 text-[#FF2638]" />
-                    <span>Open Fullscreen Sanctuary</span>
-                  </button>
-                </>
-              ) : (
-                /* Inline confirmation form */
-                <div className="bg-[#151515] border border-[#FF2638]/40 rounded-2xl p-4 max-w-sm">
-                  <p className="text-xs font-bold text-white mb-2">Rate Rest Quality:</p>
-                  <div className="flex items-center gap-1.5 mb-3">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setStopRating(s)}
-                        className={`p-1.5 rounded-lg text-lg ${stopRating >= s ? "text-[#FF2638]" : "text-[#333333]"
-                          }`}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    type="text"
-                    value={stopNotes}
-                    onChange={(e) => setStopNotes(e.target.value)}
-                    placeholder="Morning note (optional)..."
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-[#101010] border border-[#292929] text-xs text-white mb-3 focus:outline-none focus:border-[#FF2638]"
-                  />
-                  <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-start sm:self-end text-xs text-[#999999]">
+                <span>Rest Quality:</span>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((s) => (
                     <button
+                      key={s}
                       type="button"
-                      onClick={() => setConfirmingStop(false)}
-                      className="px-3 py-1.5 rounded-lg bg-[#101010] text-[#999999] text-xs"
+                      onClick={() => setStopRating(s)}
+                      className={`text-base cursor-pointer hover:scale-125 transition-transform ${stopRating >= s ? "text-[#FF2638]" : "text-[#333333]"
+                        }`}
+                      title={`Rate ${s} stars`}
                     >
-                      Cancel
+                      ★
                     </button>
-                    <button
-                      type="button"
-                      onClick={handleConfirmStop}
-                      disabled={submittingStop}
-                      className="flex-1 py-1.5 rounded-lg bg-gradient-to-r from-[#B5121B] to-[#FF2638] text-white font-bold text-xs"
-                    >
-                      {submittingStop ? "Saving..." : "Confirm & Save"}
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              )}
+              </div>
+
+              <button
+                onClick={handleDirectStop}
+                disabled={submittingStop}
+                className="py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#B5121B] via-[#FF2638] to-[#B5121B] hover:from-[#C91620] hover:via-[#FF3D4E] hover:to-[#C91620] text-white font-black text-sm shadow-[0_0_24px_rgba(255,38,56,0.5)] transition-all flex items-center justify-center gap-2 border border-[#FF2638]/60 cursor-pointer disabled:opacity-50"
+              >
+                <Check className="w-5 h-5 stroke-[2.5]" />
+                <span>{submittingStop ? "STOPPING..." : "STOP SLEEP (I'M AWAKE)"}</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowSleepOverlay(true)}
+                  className="flex-1 py-2 px-3 rounded-xl bg-[#101010] hover:bg-[#1A1A1A] text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 border border-[#292929] cursor-pointer"
+                >
+                  <Maximize2 className="w-3.5 h-3.5 text-[#FF2638]" />
+                  <span>Night Screen</span>
+                </button>
+                <button
+                  onClick={cancelSleep}
+                  className="py-2 px-3 rounded-xl bg-[#101010] hover:bg-[#1A0507] text-[#999999] hover:text-[#FF2638] text-xs font-medium transition-colors border border-[#292929] cursor-pointer"
+                >
+                  Discard
+                </button>
+              </div>
             </div>
           </div>
         )}
